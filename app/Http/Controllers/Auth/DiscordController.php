@@ -71,7 +71,7 @@ class DiscordController extends Controller
         ])->put(
             'https://discord.com/api/v10/guilds/' . env('DISCORD_GUILD_ID') . '/members/' . $discord->id,
             ['access_token' => $req->access_token]
-        );        
+        ); 
 
         if (User::where('discord_id', $discord->id)->exists()) {
             $user = User::where('discord_id', $discord->id)->first();
