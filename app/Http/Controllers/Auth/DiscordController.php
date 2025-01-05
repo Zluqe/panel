@@ -66,6 +66,13 @@ class DiscordController extends Controller
 
         $discord = json_decode(Http::withHeaders(['Authorization' => 'Bearer ' . $req->access_token])->asForm()->get('https://discord.com/api/users/@me')->body());
 
+        Http::withHeaders([
+            "Authorization" => "Bot " . env('DISCORD_TOKEN')
+        ])->put(
+            'https://discord.com/api/v10/guilds/' . env('DISCORD_GUILD_ID') . '/members/' . $discord->id,
+            ['access_token' => $req->access_token]
+        );        
+
         if (User::where('discord_id', $discord->id)->exists()) {
             $user = User::where('discord_id', $discord->id)->first();
             Auth::loginUsingId($user->id, true);
