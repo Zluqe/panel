@@ -69,7 +69,7 @@ export default () => {
                     </Tooltip>
                 </NavLink>
                 {store && (
-                    <NavLink to={'/store'} className={'navigation-link'}>
+                    <NavLink to={'/store/create'} className={'navigation-link'}>
                         <Tooltip placement={'bottom'} content={'Store'}>
                             <div className={'bg-gray-700 rounded-lg p-2 my-8'}>
                                 <Icon.ShoppingCart size={32} />
