@@ -1,6 +1,7 @@
 import tw from 'twin.macro';
 import Reaptcha from 'reaptcha';
 import login from '@/api/auth/login';
+import discordLogin from '@/api/auth/discord';
 import { object, string } from 'yup';
 import useFlash from '@/plugins/useFlash';
 import { useStoreState } from 'easy-peasy';
@@ -19,6 +20,7 @@ interface Values {
 const LoginContainer = ({ history }: RouteComponentProps) => {
     const ref = useRef<Reaptcha>(null);
     const [token, setToken] = useState('');
+    const [discordLoading, setDiscordLoading] = useState(false);
     const name = useStoreState((state) => state.settings.data?.name);
     const email = useStoreState((state) => state.settings.data?.registration.email);
     const discord = useStoreState((state) => state.settings.data?.registration.discord);
@@ -33,8 +35,6 @@ const LoginContainer = ({ history }: RouteComponentProps) => {
     const onSubmit = (values: Values, { setSubmitting }: FormikHelpers<Values>) => {
         clearFlashes();
 
-        // If there is no token in the state yet, request the token and then abort this submit request
-        // since it will be re-submitted when the recaptcha data is returned by the component.
         if (recaptchaEnabled && !token) {
             ref.current!.execute().catch((error) => {
                 console.error(error);
@@ -63,6 +63,26 @@ const LoginContainer = ({ history }: RouteComponentProps) => {
                 if (ref.current) ref.current.reset();
 
                 setSubmitting(false);
+                clearAndAddHttpError({ error });
+            });
+    };
+
+    const handleDiscordLogin = () => {
+        clearFlashes();
+        setDiscordLoading(true);
+
+        discordLogin()
+            .then((data) => {
+                if (!data) {
+                    clearAndAddHttpError({ error: 'Discord auth failed. Please try again.' });
+                    setDiscordLoading(false);
+                    return;
+                }
+                window.location.href = data;
+            })
+            .catch((error) => {
+                console.error(error);
+                setDiscordLoading(false);
                 clearAndAddHttpError({ error });
             });
     };
@@ -103,25 +123,23 @@ const LoginContainer = ({ history }: RouteComponentProps) => {
                         />
                     )}
                     {discord && (
-                        <Link
-                            to={'/auth/discord'}
-                            className={'flex justify-center items-center w-full mt-6'}
-                        >
-                            <div
+                        <div className="flex justify-center items-center mt-6">
+                            <button
+                                type="button"
+                                onClick={handleDiscordLogin}
+                                disabled={discordLoading}
                                 className={
-                                    'flex justify-center items-center w-full h-[48px] px-5 py-3 bg-[#5865F2] rounded-md text-base font-medium leading-6'
+                                    'flex justify-center items-center w-full h-[48px] px-5 py-3 bg-[#5865F2] rounded-md text-white text-base font-medium leading-6 hover:bg-[#4752C4] transition-all duration-200 disabled:opacity-50'
                                 }
                             >
                                 <img
-                                    src={
-                                        'https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6ca814282eca7172c6_icon_clyde_white_RGB.svg'
-                                    }
-                                    alt={'Discord'}
-                                    className={'h-6 mr-2'}
+                                    src="https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6ca814282eca7172c6_icon_clyde_white_RGB.svg"
+                                    alt="Discord"
+                                    className="h-6 mr-2"
                                 />
-                                <span>Login with Discord</span>
-                            </div>
-                        </Link>
+                                <span>{discordLoading ? 'Connecting...' : 'Login with Discord'}</span>
+                            </button>
+                        </div>
                     )}
                     <div css={tw`flex justify-center mt-6 text-center`}>
                         <Link
