@@ -102,7 +102,18 @@ const LoginContainer = ({ history }: RouteComponentProps) => {
                             }}
                         />
                     )}
-                    <div css={tw`mt-6 text-center`}>
+                    {discord && (
+                        <Link
+                            to={'/auth/discord'}
+                            className={'flex justify-center items-center w-full  mt-6'}
+                        >
+                            <div className={'flex justify-center items-center h-10 w-full p-2 bg-[#5865F2] rounded-md'}>
+                                <img src={'https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6ca814282eca7172c6_icon_clyde_white_RGB.svg'} alt={'Discord'} className={'h-6 mr-2'}/>
+                                <span>Login with Discord</span>
+                            </div>
+                        </Link>
+                    )}
+                    <div css={tw`flex justify-center mt-6 text-center`}>
                         <Link
                             to={'/auth/password'}
                             css={tw`text-xs text-neutral-500 tracking-wide no-underline uppercase hover:text-neutral-600`}
@@ -111,21 +122,13 @@ const LoginContainer = ({ history }: RouteComponentProps) => {
                         </Link>
                     </div>
                     {(email || discord) && (
-                        <div css={tw`mt-6 text-center`}>
+                        <div css={tw`flex justify-center mt-6 text-center`}>
                             {email && (
                                 <Link
                                     to={'/auth/register'}
                                     css={tw`text-xs text-neutral-500 tracking-wide no-underline uppercase hover:text-neutral-600`}
                                 >
                                     Signup with Email
-                                </Link>
-                            )}
-                            {discord && (
-                                <Link
-                                    to={'/auth/discord'}
-                                    css={tw`text-xs ml-6 text-neutral-500 tracking-wide no-underline uppercase hover:text-neutral-600`}
-                                >
-                                    Authenticate with Discord
                                 </Link>
                             )}
                         </div>
