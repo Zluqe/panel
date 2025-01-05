@@ -72,7 +72,7 @@ export default () => {
                     <NavLink to={'/store/create'} className={'navigation-link'}>
                         <Tooltip placement={'bottom'} content={'Store'}>
                             <div className={'bg-gray-700 rounded-lg p-2 my-8'}>
-                                <Icon.ShoppingCart size={32} />
+                                <Icon.Plus size={32} />
                             </div>
                         </Tooltip>
                     </NavLink>
