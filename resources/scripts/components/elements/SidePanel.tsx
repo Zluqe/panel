@@ -61,13 +61,6 @@ export default () => {
                         </div>
                     </Tooltip>
                 </NavLink>
-                <NavLink to={'/account'} className={'navigation-link'}>
-                    <Tooltip placement={'bottom'} content={'Account'}>
-                        <div className={'bg-gray-700 rounded-lg p-2 my-8'}>
-                            <Icon.User size={32} />
-                        </div>
-                    </Tooltip>
-                </NavLink>
                 {store && (
                     <NavLink to={'/store/create'} className={'navigation-link'}>
                         <Tooltip placement={'bottom'} content={'Store'}>
@@ -76,7 +69,14 @@ export default () => {
                             </div>
                         </Tooltip>
                     </NavLink>
-                )}
+                )}                
+                <NavLink to={'/account'} className={'navigation-link'}>
+                    <Tooltip placement={'bottom'} content={'Account'}>
+                        <div className={'bg-gray-700 rounded-lg p-2 my-8'}>
+                            <Icon.User size={32} />
+                        </div>
+                    </Tooltip>
+                </NavLink>
                 {tickets && (
                     <NavLink to={'/tickets'} className={'navigation-link'}>
                         <Tooltip placement={'bottom'} content={'Tickets'}>
