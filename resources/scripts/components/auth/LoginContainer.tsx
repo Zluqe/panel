@@ -105,10 +105,20 @@ const LoginContainer = ({ history }: RouteComponentProps) => {
                     {discord && (
                         <Link
                             to={'/auth/discord'}
-                            className={'flex justify-center items-center w-full  mt-6'}
+                            className={'flex justify-center items-center w-full mt-6'}
                         >
-                            <div className={'flex justify-center items-center h-[48px] w-full p-3 bg-[#5865F2] rounded-md'}>
-                                <img src={'https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6ca814282eca7172c6_icon_clyde_white_RGB.svg'} alt={'Discord'} className={'h-6 mr-2'}/>
+                            <div
+                                className={
+                                    'flex justify-center items-center w-full h-[48px] px-5 py-3 bg-[#5865F2] rounded-md text-base font-medium leading-6'
+                                }
+                            >
+                                <img
+                                    src={
+                                        'https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6ca814282eca7172c6_icon_clyde_white_RGB.svg'
+                                    }
+                                    alt={'Discord'}
+                                    className={'h-6 mr-2'}
+                                />
                                 <span>Login with Discord</span>
                             </div>
                         </Link>
