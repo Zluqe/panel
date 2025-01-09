@@ -62,9 +62,6 @@ class LoginController extends AbstractLoginController
             $this->sendFailedLoginResponse($request, $user);
         }
 
-        // Store the user's IP address upon successful login
-        $user->update(['ip_address' => $request->ip()]);
-
         if (!$user->use_totp) {
             return $this->sendLoginResponse($user, $request);
         }
