@@ -97,5 +97,6 @@ class Kernel extends HttpKernel
         'bindings' => SubstituteBindings::class,
         'recaptcha' => VerifyReCaptcha::class,
         'node.maintenance' => MaintenanceMiddleware::class,
+        'block.duplicate.ip' => \App\Http\Middleware\BlockDuplicateIP::class,
     ];
 }

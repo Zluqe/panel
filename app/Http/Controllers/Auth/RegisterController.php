@@ -8,6 +8,7 @@ use Jexactyl\Http\Requests\Auth\RegisterRequest;
 use Jexactyl\Services\Users\UserCreationService;
 use Jexactyl\Exceptions\Model\DataValidationException;
 use Jexactyl\Contracts\Repository\SettingsRepositoryInterface;
+use Jexactyl\Models\User;
 
 class RegisterController extends AbstractLoginController
 {
@@ -42,13 +43,20 @@ class RegisterController extends AbstractLoginController
             $approved = true;
         }
 
+        // Check if an account already exists for this IP
+        $ipAddress = $request->getClientIp();
+        if (User::query()->where('ip_address', $ipAddress)->exists()) {
+            throw new DisplayException('An account already exists with this IP address.');
+        }
+
+        // Proceed with user creation
         $this->creationService->handle([
             'email' => $request->input('email'),
             'username' => $request->input('user'),
             'name_first' => 'Jexactyl',
             'name_last' => 'User',
             'password' => $request->input('password'),
-            'ip' => $request->getClientIp(),
+            'ip' => $ipAddress, // Pass the IP to the creation service
             'store_cpu' => $this->settings->get($prefix . 'cpu', 0),
             'store_memory' => $this->settings->get($prefix . 'memory', 0),
             'store_disk' => $this->settings->get($prefix . 'disk', 0),
