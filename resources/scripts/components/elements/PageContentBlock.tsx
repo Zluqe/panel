@@ -56,6 +56,21 @@ const PageContentBlock: React.FC<PageContentBlockProps> = ({
                         &bull;
                         <a href={'https://github.com/jexactyl/jexactyl'}> GitHub </a>
                     </p>
+                    {/* TrustBox widget - Review Collector */}
+                    <div
+                        className="trustpilot-widget"
+                        data-locale="en-US"
+                        data-template-id="56278e9abfbbba0bdcd568bc"
+                        data-businessunit-id="678306015e36f066a4dbb211"
+                        data-style-height="52px"
+                        data-style-width="100%"
+                        css={tw`mt-4`}
+                    >
+                        <a href="https://www.trustpilot.com/review/zluqe.org" target="_blank" rel="noopener">
+                            Trustpilot
+                        </a>
+                    </div>
+                    {/* End TrustBox widget */}
                 </ContentContainer>
             </div>
         </CSSTransition>
