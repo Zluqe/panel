@@ -52,7 +52,7 @@ const PageContentBlock: React.FC<PageContentBlockProps> = ({
                         <a href={'https://jexactyl.com'}>Jexactyl.</a>
                     </p>
                     <p css={tw`text-neutral-500 sm:float-right`}>
-                        <a href={'https://www.trustpilot.com/review/zluqe.org'}> Review us on Trustpilot</a>
+                        <a href={'https://www.trustpilot.com/review/zluqe.org'}> Review us on Trustpilot </a>
                         &bull;
                         <a href={'https://github.com/Zluqe/'}> GitHub </a>
                     </p>
