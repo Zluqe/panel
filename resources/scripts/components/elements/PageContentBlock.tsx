@@ -48,21 +48,14 @@ const PageContentBlock: React.FC<PageContentBlockProps> = ({
                 </ContentContainer>
                 <ContentContainer css={tw`text-sm text-center my-4 pb-8`}>
                     <p css={tw`text-neutral-500 sm:float-left`}>
-                        &copy; <a href={'https://jexactyl.com'}>Jexactyl,</a> built on{' '}
-                        <a href={'https://pterodactyl.io'}>Pterodactyl.</a>
+                        &copy; <a href={'https://zluqe.org'}>Zluqe,</a> built on{' '}
+                        <a href={'https://jexactyl.com'}>Jexactyl.</a>
                     </p>
                     <p css={tw`text-neutral-500 sm:float-right`}>
-                        <a href={'https://jexactyl.com'}> Site </a>
+                        <a href={'https://www.trustpilot.com/review/zluqe.org'}> Review us on Trustpilot</a>
                         &bull;
-                        <a href={'https://github.com/jexactyl/jexactyl'}> GitHub </a>
+                        <a href={'https://github.com/Zluqe/'}> GitHub </a>
                     </p>
-                    {/* TrustBox widget - Review Collector */}
-                    <div>
-                        <a href="https://www.trustpilot.com/review/zluqe.org" target="_blank" rel="noopener">
-                            Zluqe | Trustpilot
-                        </a>
-                    </div>
-                    {/* End TrustBox widget */}
                 </ContentContainer>
             </div>
         </CSSTransition>
