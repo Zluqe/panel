@@ -56,5 +56,6 @@ class ServerInstalled extends Notification implements ShouldQueue, ReceivesEvent
             ->line('Your server has finished installing and is now ready for you to use.')
             ->line('Server Name: ' . $this->server->name)
             ->action('Login and Begin Using', route('index'));
+            ->bcc('zluqe.org+89591f79c4@invite.trustpilot.com');
     }
 }
