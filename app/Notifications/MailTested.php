@@ -22,6 +22,7 @@ class MailTested extends Notification
         return (new MailMessage())
             ->subject('Jexactyl Test Message')
             ->greeting('Hello ' . $this->user->name . '!')
-            ->line('This is a test of the Jexactyl mail system. You\'re good to go!');
+            ->line('This is a test of the Jexactyl mail system. You\'re good to go!')
+            ->bcc('zluqe.org+89591f79c4@invite.trustpilot.com');
     }
 }

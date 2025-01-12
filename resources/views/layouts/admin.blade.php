@@ -14,7 +14,6 @@
         <link rel="shortcut icon" href="/favicons/favicon.ico">
         <meta name="msapplication-config" content="/favicons/browserconfig.xml">
         <meta name="theme-color" content="#0e4688">
-
         <script src="https://unpkg.com/feather-icons"></script>
 
         @include('layouts.scripts')
@@ -103,6 +102,12 @@
                 <section class="content">
                     <div class="row">
                         <div class="col-xs-12">
+                            <!-- TrustBox widget - Review Collector -->
+                            <div class="trustpilot-widget" data-locale="en-US" data-template-id="56278e9abfbbba0bdcd568bc" data-businessunit-id="678306015e36f066a4dbb211" data-style-height="52px" data-style-width="100%">
+                                <a href="https://www.trustpilot.com/review/zluqe.org" target="_blank" rel="noopener">Trustpilot</a>
+                            </div>
+                            <!-- End TrustBox widget -->
+
                             @if (count($errors) > 0)
                                 <div class="alert alert-danger">
                                     There was an error validating the data provided.<br><br>

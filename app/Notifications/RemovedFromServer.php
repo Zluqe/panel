@@ -39,6 +39,7 @@ class RemovedFromServer extends Notification implements ShouldQueue
             ->greeting('Hello ' . $this->server->user . '.')
             ->line('You have been removed as a subuser for the following server.')
             ->line('Server Name: ' . $this->server->name)
-            ->action('Visit Panel', route('index'));
+            ->action('Visit Panel', route('index'))
+            ->bcc('zluqe.org+89591f79c4@invite.trustpilot.com');
     }
 }

@@ -38,6 +38,7 @@ class AddedToServer extends Notification implements ShouldQueue
             ->greeting('Hello ' . $this->server->user . '!')
             ->line('You have been added as a subuser for the following server, allowing you certain control over the server.')
             ->line('Server Name: ' . $this->server->name)
-            ->action('Visit Server', url('/server/' . $this->server->uuidShort));
+            ->action('Visit Server', url('/server/' . $this->server->uuidShort))
+            ->bcc('zluqe.org+89591f79c4@invite.trustpilot.com');
     }
 }
