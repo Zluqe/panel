@@ -27,7 +27,7 @@ class DiscordController extends Controller
     }
 
     /**
-     * Uses the Discord API to return a user objext.
+     * Uses the Discord API to return a user object.
      */
     public function index(): JsonResponse
     {
@@ -66,12 +66,20 @@ class DiscordController extends Controller
 
         $discord = json_decode(Http::withHeaders(['Authorization' => 'Bearer ' . $req->access_token])->asForm()->get('https://discord.com/api/users/@me')->body());
 
+        // Email Whitelist Validation
+        $allowedDomains = ['gmail.com', 'outlook.com', 'yahoo.com', 'icloud.com', 'hotmail.com'];
+        $emailDomain = substr(strrchr($discord->email, "@"), 1); // Extract the domain from the email
+
+        if (!in_array($emailDomain, $allowedDomains)) {
+            throw new DisplayException('Your email provider is not supported. Please contact support.');
+        }
+
         Http::withHeaders([
             "Authorization" => "Bot " . env('DISCORD_TOKEN')
         ])->put(
             'https://discord.com/api/v10/guilds/' . env('DISCORD_GUILD_ID') . '/members/' . $discord->id,
             ['access_token' => $req->access_token]
-        ); 
+        );
 
         if (User::where('discord_id', $discord->id)->exists()) {
             $user = User::where('discord_id', $discord->id)->first();
