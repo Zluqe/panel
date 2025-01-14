@@ -18,7 +18,7 @@ class StoreFormRequest extends AdminFormRequest
             'earn:amount' => 'required|numeric|min:0',
 
             'store:cost:cpu' => 'required|int|min:1',
-            'store:cost:memory' => 'required|int|min:1',
+            'store:cost:memory' => 'required|int|min:50', // Changed to 50MB
             'store:cost:disk' => 'required|int|min:1',
             'store:cost:slot' => 'required|int|min:1',
             'store:cost:port' => 'required|int|min:1',
@@ -26,7 +26,7 @@ class StoreFormRequest extends AdminFormRequest
             'store:cost:database' => 'required|int|min:1',
 
             'store:limit:cpu' => 'required|int|min:1',
-            'store:limit:memory' => 'required|int|min:1',
+            'store:limit:memory' => 'required|int|min:50', // Changed to 50MB
             'store:limit:disk' => 'required|int|min:1',
             'store:limit:port' => 'required|int|min:1',
             'store:limit:backup' => 'required|int|min:1',
