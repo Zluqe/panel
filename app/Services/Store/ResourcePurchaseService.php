@@ -51,12 +51,16 @@ class ResourcePurchaseService
     protected function amount(string $resource): int
     {
         return match ($resource) {
-            'cpu' => 50,
-            'disk', 'memory' => 1024,
-            'slots', 'ports', 'backups', 'databases' => 1,
+            'cpu' => 1, // Assign 1% CPU
+            'disk' => 1, // Assign 1MB disk
+            'memory' => 1, // Assign 1MB RAM
+            'slots' => 1, // Assign 1 slots
+            'ports' => 1, // Assign 1 ports
+            'backups' => 1, // Assign 1 backup
+            'databases' => 1, // Assign 1 database
             default => throw new DisplayException('Unable to parse resource type')
         };
-    }
+    }    
 
     /**
      * Shortcut method to get data from the database.
