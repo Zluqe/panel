@@ -67,7 +67,7 @@ class DiscordController extends Controller
         $discord = json_decode(Http::withHeaders(['Authorization' => 'Bearer ' . $req->access_token])->asForm()->get('https://discord.com/api/users/@me')->body());
 
         // Email Whitelist Validation
-        $allowedDomains = ['gmail.com', 'outlook.com', 'yahoo.com', 'icloud.com', 'hotmail.com'];
+        $allowedDomains = ['gmail.com', 'outlook.com', 'yahoo.com', 'icloud.com', 'hotmail.com', 'proton.me'];
         $emailDomain = substr(strrchr($discord->email, "@"), 1); // Extract the domain from the email
 
         if (!in_array($emailDomain, $allowedDomains)) {
