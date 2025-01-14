@@ -78,7 +78,7 @@ export default () => {
             <Container className={'lg:grid lg:grid-cols-4 my-10 gap-8'}>
                 <PurchaseBox
                     type={'CPU'}
-                    amount={50}
+                    amount={10}
                     suffix={'%'}
                     cost={costs.cpu}
                     setOpen={setOpen}
@@ -88,8 +88,8 @@ export default () => {
                 />
                 <PurchaseBox
                     type={'Memory'}
-                    amount={1}
-                    suffix={'GB'}
+                    amount={256}
+                    suffix={'MB'}
                     cost={costs.memory}
                     setOpen={setOpen}
                     icon={<Icon.PieChart />}
@@ -98,8 +98,8 @@ export default () => {
                 />
                 <PurchaseBox
                     type={'Disk'}
-                    amount={1}
-                    suffix={'GB'}
+                    amount={512}
+                    suffix={'MB'}
                     cost={costs.disk}
                     setOpen={setOpen}
                     icon={<Icon.HardDrive />}

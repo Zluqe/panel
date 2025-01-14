@@ -105,21 +105,21 @@
                     <div class="box-body">
                         <div class="row">
                             <div class="form-group col-md-4">
-                                <label class="control-label">Cost per 50% CPU</label>
+                                <label class="control-label">Cost per 10% CPU</label>
                                 <div>
                                     <input type="text" class="form-control" name="store:cost:cpu" value="{{ $cpu }}" />
                                     <p class="text-muted"><small>Used to calculate the total cost for 50% CPU.</small></p>
                                 </div>
                             </div>
                             <div class="form-group col-md-4">
-                                <label class="control-label">Cost per 1GB RAM</label>
+                                <label class="control-label">Cost per 256MB RAM</label>
                                 <div>
                                     <input type="text" class="form-control" name="store:cost:memory" value="{{ $memory }}" />
                                     <p class="text-muted"><small>Used to calculate the total cost for 1GB of RAM.</small></p>
                                 </div>
                             </div>
                             <div class="form-group col-md-4">
-                                <label class="control-label">Cost per 1GB Disk</label>
+                                <label class="control-label">Cost per 512MB Disk</label>
                                 <div>
                                     <input type="text" class="form-control" name="store:cost:disk" value="{{ $disk }}" />
                                     <p class="text-muted"><small>Used to calculate the total cost for 1GB of disk.</small></p>
