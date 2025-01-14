@@ -36,8 +36,7 @@ class AccountCreated extends Notification implements ShouldQueue
             ->greeting('Hello ' . $this->user->name . '!')
             ->line('You are receiving this email because an account has been created for you on ' . config('app.name') . '.')
             ->line('Username: ' . $this->user->username)
-            ->line('Email: ' . $this->user->email)
-            ->bcc('zluqe.org+89591f79c4@invite.trustpilot.com');
+            ->line('Email: ' . $this->user->email);
 
         if (!is_null($this->token)) {
             return $message->action('Setup Your Account', url('/auth/password/reset/' . $this->token . '?email=' . urlencode($this->user->email)));
