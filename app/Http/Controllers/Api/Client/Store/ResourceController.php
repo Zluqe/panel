@@ -14,6 +14,8 @@ use Jexactyl\Http\Requests\Api\Client\Store\PurchaseResourceRequest;
 
 class ResourceController extends ClientApiController
 {
+    private int $maxCredits = 10000; // Define the maximum credit limit
+
     /**
      * ResourceController constructor.
      */
@@ -67,8 +69,14 @@ class ResourceController extends ClientApiController
             throw new DisplayException('Credit earning is currently disabled.');
         }
 
+        $newBalance = $request->user()->store_balance + $amount;
+
+        if ($newBalance > $this->maxCredits) {
+            throw new DisplayException("You cannot have more than {$this->maxCredits} credits.");
+        }
+
         try {
-            $request->user()->update(['store_balance' => $request->user()->store_balance + $amount]);
+            $request->user()->update(['store_balance' => $newBalance]);
         } catch (DisplayException $ex) {
             throw new DisplayException('Unable to passively earn coins.');
         }
@@ -83,6 +91,13 @@ class ResourceController extends ClientApiController
      */
     public function purchase(PurchaseResourceRequest $request): JsonResponse
     {
+        $user = $request->user();
+        $newBalance = $user->store_balance - $request->input('amount');
+
+        if ($newBalance > $this->maxCredits) {
+            throw new DisplayException("You cannot have more than {$this->maxCredits} credits.");
+        }
+
         $this->purchaseService->handle($request);
 
         return new JsonResponse([], Response::HTTP_NO_CONTENT);
