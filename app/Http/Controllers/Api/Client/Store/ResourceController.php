@@ -15,6 +15,7 @@ use Jexactyl\Http\Requests\Api\Client\Store\PurchaseResourceRequest;
 class ResourceController extends ClientApiController
 {
     private int $maxCredits = 10000; // Define the maximum credit limit
+    private int $maxDailyCredits = 360; // Define the daily credit earning limit
 
     /**
      * ResourceController constructor.
@@ -69,17 +70,34 @@ class ResourceController extends ClientApiController
             throw new DisplayException('Credit earning is currently disabled.');
         }
 
-        $newBalance = $request->user()->store_balance + $amount;
+        $user = $request->user();
+        $currentDate = now();
+
+        // Reset daily credits if the reset date has passed
+        if ($user->daily_reset_at === null || $currentDate->greaterThan($user->daily_reset_at)) {
+            $user->update([
+                'daily_credits_earned' => 0,
+                'daily_reset_at' => $currentDate->endOfDay(),
+            ]);
+        }
+
+        $newDailyTotal = $user->daily_credits_earned + $amount;
+
+        if ($newDailyTotal > $this->maxDailyCredits) {
+            throw new DisplayException("You can only earn up to {$this->maxDailyCredits} credits per day.");
+        }
+
+        $newBalance = $user->store_balance + $amount;
 
         if ($newBalance > $this->maxCredits) {
             throw new DisplayException("You cannot have more than {$this->maxCredits} credits.");
         }
 
-        try {
-            $request->user()->update(['store_balance' => $newBalance]);
-        } catch (DisplayException $ex) {
-            throw new DisplayException('Unable to passively earn coins.');
-        }
+        // Update the user's daily credits and store balance
+        $user->update([
+            'store_balance' => $newBalance,
+            'daily_credits_earned' => $newDailyTotal,
+        ]);
 
         return new JsonResponse([], Response::HTTP_NO_CONTENT);
     }
