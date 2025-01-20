@@ -148,6 +148,8 @@ class User extends Model implements
         'store_databases',
         'referral_code',
         'approved',
+        'daily_credits_earned',
+        'daily_reset_at',
     ];
 
     /**
@@ -157,6 +159,7 @@ class User extends Model implements
         'root_admin' => 'boolean',
         'use_totp' => 'boolean',
         'gravatar' => 'boolean',
+        'daily_reset_at' => 'datetime',
     ];
 
     protected $dates = ['totp_authenticated_at'];
@@ -204,6 +207,8 @@ class User extends Model implements
         'store_ports' => 'sometimes|int',
         'store_backups' => 'sometimes|int',
         'store_database' => 'sometimes|int',
+        'daily_credits_earned' => 'integer|min:0',
+        'daily_reset_at' => 'nullable|date',
     ];
 
     /**
