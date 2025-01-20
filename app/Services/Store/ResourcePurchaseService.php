@@ -52,8 +52,8 @@ class ResourcePurchaseService
     {
         return match ($resource) {
             'cpu' => 10, // Assign 1% CPU
-            'disk' => 512, // Assign 1MB disk
-            'memory' => 256, // Assign 1MB RAM
+            'disk' => 256, // Assign 1MB disk
+            'memory' => 128, // Assign 1MB RAM
             'slots' => 1, // Assign 1 slots
             'ports' => 1, // Assign 1 ports
             'backups' => 1, // Assign 1 backup

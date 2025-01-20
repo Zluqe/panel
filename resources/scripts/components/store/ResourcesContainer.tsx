@@ -88,7 +88,7 @@ export default () => {
                 />
                 <PurchaseBox
                     type={'Memory'}
-                    amount={256}
+                    amount={128}
                     suffix={'MB'}
                     cost={costs.memory}
                     setOpen={setOpen}
@@ -98,7 +98,7 @@ export default () => {
                 />
                 <PurchaseBox
                     type={'Disk'}
-                    amount={512}
+                    amount={256}
                     suffix={'MB'}
                     cost={costs.disk}
                     setOpen={setOpen}
