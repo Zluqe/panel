@@ -81,7 +81,6 @@ class ServerController extends ApplicationApiController
     {
         $this->deletionService
             ->withForce($force === 'force')
-            ->returnResources(true)
             ->returnResources($request->filled('return_resources'))
             ->handle($server);
 

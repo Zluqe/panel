@@ -14,7 +14,7 @@ use Jexactyl\Exceptions\Http\Connection\DaemonConnectionException;
 class ServerDeletionService
 {
     protected bool $force = false;
-    protected bool $return_resources = true;
+    protected bool $return_resources = false;
 
     /**
      * ServerDeletionService constructor.
