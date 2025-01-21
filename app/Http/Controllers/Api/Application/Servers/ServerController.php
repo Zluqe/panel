@@ -79,15 +79,12 @@ class ServerController extends ApplicationApiController
      */
     public function delete(ServerWriteRequest $request, Server $server, string $force = ''): Response
     {
-        // Check if the request is authenticated using an API key (no user context)
-        $isApiKeyRequest = $request->header('Authorization') && $request->user() === null;
-    
         $this->deletionService
             ->withForce($force === 'force')
-            ->returnResources($isApiKeyRequest || $request->filled('return_resources')) // Force resource return for API key requests
+            ->returnResources(true)
+            ->returnResources($request->filled('return_resources'))
             ->handle($server);
-    
+
         return $this->returnNoContent();
     }
-    
 }

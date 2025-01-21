@@ -37,7 +37,7 @@ class ServerDeletionService
     }
 
     /**
-     * Set if the server's owner should recieve the resources upon server deletion.
+     * Set if the server's owner should receive the resources upon server deletion.
      *
      * @return $this
      */
