@@ -6,11 +6,12 @@ interface Data {
 }
 
 export default ({ username, password }: Data): Promise<void> => {
-    return new Promise(() => {
+    return new Promise((resolve, reject) => {
         http.put('/api/client/account/username', {
             username: username,
             password: password,
-        });
-        // No resolve, no reject, and no response handling
+        })
+            .then(() => resolve())
+            .catch(reject);
     });
 };

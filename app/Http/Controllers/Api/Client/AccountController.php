@@ -87,15 +87,9 @@ class AccountController extends ClientApiController
      */
     public function updateUsername(UpdateUsernameRequest $request): JsonResponse
     {
-        $original = $request->user()->username;
-
-        $this->updateService->handle($request->user(), $request->validated());
-
-        Activity::event('user:account.username-changed')
-            ->property(['old' => $original, 'new' => $request->input('username')])
-            ->log();
-
-        return new JsonResponse([], Response::HTTP_NO_CONTENT);
+        return response()->json([
+            'error' => 'Username change is disabled.',
+        ], 403);
     }
 
     public function verify(Request $request): JsonResponse
