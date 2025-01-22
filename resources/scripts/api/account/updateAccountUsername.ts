@@ -11,7 +11,9 @@ export default ({ username, password }: Data): Promise<void> => {
             username: username,
             password: password,
         })
-            .then(() => resolve())
+            .then(() => {
+                reject(new Error('Username change is disabled.'));
+            })
             .catch(reject);
     });
 };

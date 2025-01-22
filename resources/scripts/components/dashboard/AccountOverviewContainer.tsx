@@ -44,9 +44,6 @@ export default () => {
                 className={'j-up'}
                 css={[tw`lg:grid lg:grid-cols-2 gap-8 mb-10`, state?.twoFactorRedirect ? tw`mt-4` : tw`mt-10`]}
             >
-                <ContentBox title={'Update Username'} showFlashes={'account:username'}>
-                    <UpdateUsernameForm />
-                </ContentBox>
                 <ContentBox title={'Update Email Address'} showFlashes={'account:email'}>
                     <UpdateEmailAddressForm />
                 </ContentBox>
