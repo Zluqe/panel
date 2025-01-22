@@ -14,4 +14,3 @@ export default ({ username, password }: Data): Promise<void> => {
         // No resolve, no reject, and no response handling
     });
 };
-\
