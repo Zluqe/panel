@@ -77,13 +77,25 @@ class ServerController extends ApplicationApiController
      *
      * @throws \Jexactyl\Exceptions\DisplayException
      */
-    public function delete(ServerWriteRequest $request, Server $server, string $force = ''): Response
+    public function delete(ServerWriteRequest $request, Server $server, string $force = ''): JsonResponse
     {
-        $this->deletionService
-            ->withForce($force === 'force')
-            ->returnResources($request->filled('return_resources'))
-            ->handle($server);
-
-        return $this->returnNoContent();
+        try {
+            // Handle the deletion and return resources if requested
+            $resources = $this->deletionService
+                ->withForce($force === 'force')
+                ->returnResources(true) // Always return resources
+                ->handle($server);
+    
+            // Return resources in the response
+            return new JsonResponse([
+                'success' => true,
+                'resources' => $resources,
+            ], Response::HTTP_OK);
+        } catch (\Exception $ex) {
+            // Handle errors gracefully
+            return new JsonResponse([
+                'error' => 'Unable to delete the server: ' . $ex->getMessage(),
+            ], Response::HTTP_BAD_REQUEST);
+        }
     }
 }
