@@ -14,6 +14,12 @@ export default ({ username, password }: Data): Promise<void> => {
             .then(() => {
                 reject(new Error('Username change is disabled.'));
             })
-            .catch(reject);
+            .catch((error) => {
+                if (error.response?.status === 403) {
+                    reject(new Error(error.response.data.error || 'Username change is disabled.'));
+                } else {
+                    reject(error);
+                }
+            });
     });
 };
