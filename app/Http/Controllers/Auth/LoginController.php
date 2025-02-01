@@ -6,8 +6,9 @@ use Jexactyl\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use Jexactyl\Facades\Activity;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Http;
+use Jexactyl\Facades\Activity;
 use Illuminate\Contracts\View\View;
 use Illuminate\Contracts\View\Factory as ViewFactory;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -40,6 +41,31 @@ class LoginController extends AbstractLoginController
      */
     public function login(Request $request): JsonResponse
     {
+        // Get user's IP address
+        $userIp = $request->getClientIp();
+
+        // Retrieve VPNAPI.io key from .env
+        $vpnApiKey = env('VPNAPI_KEY');
+
+        // Check if the IP
+        $vpnCheckResponse = Http::get("https://vpnapi.io/api/{$userIp}?key={$vpnApiKey}");
+
+        if ($vpnCheckResponse->failed()) {
+            return response()->json(['error' => 'Failed to verify VPN status. Please try again later.'], 403);
+        }
+
+        $vpnData = $vpnCheckResponse->json();
+
+        // Block VPN, Proxy, and Tor
+        if (
+            (isset($vpnData['security']['vpn']) && $vpnData['security']['vpn'] === true) ||
+            (isset($vpnData['security']['proxy']) && $vpnData['security']['proxy'] === true) ||
+            (isset($vpnData['security']['tor']) && $vpnData['security']['tor'] === true) ||
+            (isset($vpnData['security']['relay']) && $vpnData['security']['relay'] === true)
+        ) {
+            return response()->json(['error' => 'VPN, Proxy, or Tor detected. Please disable it to proceed.'], 403);
+        }
+
         if ($this->hasTooManyLoginAttempts($request)) {
             $this->fireLockoutEvent($request);
             $this->sendLockoutResponse($request);

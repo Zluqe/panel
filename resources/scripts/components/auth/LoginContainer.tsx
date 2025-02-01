@@ -73,7 +73,13 @@ const LoginContainer = ({ history }: RouteComponentProps) => {
                 if (ref.current) ref.current.reset();
 
                 setSubmitting(false);
-                clearAndAddHttpError({ error });
+
+                // Check if error is related to VPN block
+                if (error.response && error.response.data && error.response.data.error) {
+                    alert(error.response.data.error); // Show the VPN block error in an alert
+                } else {
+                    clearAndAddHttpError({ error });
+                }
             });
     };
 
