@@ -47,6 +47,32 @@ class DiscordController extends Controller
      */
     public function callback(Request $request)
     {
+        // Get user's IP address
+        $userIp = $request->getClientIp();
+
+        // Retrieve key from .env
+        $vpnApiKey = env('VPNAPI_KEY');
+
+        // Check if the IP is a VPN using VPNAPI.io
+        $vpnCheckResponse = Http::get("https://vpnapi.io/api/{$userIp}?key={$vpnApiKey}");
+
+        if ($vpnCheckResponse->failed()) {
+            throw new DisplayException('Failed to verify VPN status. Please try again later.');
+        }
+
+        $vpnData = $vpnCheckResponse->json();
+
+        // Block VPN, Proxy, and Tor
+        if (
+            (isset($vpnData['security']['vpn']) && $vpnData['security']['vpn'] === true) ||
+            (isset($vpnData['security']['proxy']) && $vpnData['security']['proxy'] === true) ||
+            (isset($vpnData['security']['tor']) && $vpnData['security']['tor'] === true) ||
+            (isset($vpnData['security']['relay']) && $vpnData['security']['relay'] === true)
+        ) {
+            throw new DisplayException('VPN, Proxy, or Tor detected. Please disable it to proceed.');
+        }
+
+        // Discord authentication
         $code = Http::asForm()->post('https://discord.com/api/oauth2/token', [
             'client_id' => $this->settings->get('jexactyl::discord:id'),
             'client_secret' => $this->settings->get('jexactyl::discord:secret'),
@@ -104,7 +130,7 @@ class DiscordController extends Controller
                 'name_first' => $discord->username,
                 'name_last' => $discord->discriminator,
                 'password' => $this->genString(),
-                'ip' => $request->getClientIp(),
+                'ip' => $userIp,
                 'store_cpu' => $this->settings->get('jexactyl::registration:cpu', 0),
                 'store_memory' => $this->settings->get('jexactyl::registration:memory', 0),
                 'store_disk' => $this->settings->get('jexactyl::registration:disk', 0),
