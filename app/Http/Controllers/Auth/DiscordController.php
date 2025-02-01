@@ -50,14 +50,14 @@ class DiscordController extends Controller
         // Get user's IP address
         $userIp = $request->getClientIp();
 
-        // Retrieve key from .env
+        // Retrieve VPNAPI.io key from .env
         $vpnApiKey = env('VPNAPI_KEY');
 
         // Check if the IP is a VPN using VPNAPI.io
         $vpnCheckResponse = Http::get("https://vpnapi.io/api/{$userIp}?key={$vpnApiKey}");
 
         if ($vpnCheckResponse->failed()) {
-            throw new DisplayException('Failed to verify VPN status. Please try again later.');
+            return redirect()->route('auth.login', ['error' => 'Failed to verify VPN status. Please try again later.']);
         }
 
         $vpnData = $vpnCheckResponse->json();
@@ -69,10 +69,10 @@ class DiscordController extends Controller
             (isset($vpnData['security']['tor']) && $vpnData['security']['tor'] === true) ||
             (isset($vpnData['security']['relay']) && $vpnData['security']['relay'] === true)
         ) {
-            throw new DisplayException('VPN, Proxy, or Tor detected. Please disable it to proceed.');
+            return redirect()->route('auth.login', ['error' => 'VPN, Proxy, or Tor detected. Please disable it to proceed.']);
         }
 
-        // Discord authentication
+        // Proceed with Discord authentication
         $code = Http::asForm()->post('https://discord.com/api/oauth2/token', [
             'client_id' => $this->settings->get('jexactyl::discord:id'),
             'client_secret' => $this->settings->get('jexactyl::discord:secret'),
@@ -94,10 +94,10 @@ class DiscordController extends Controller
 
         // Email Whitelist Validation
         $allowedDomains = ['gmail.com', 'outlook.com', 'yahoo.com', 'icloud.com', 'hotmail.com', 'proton.me'];
-        $emailDomain = substr(strrchr($discord->email, "@"), 1); // Extract the domain from the email
+        $emailDomain = substr(strrchr($discord->email, "@"), 1);
 
         if (!in_array($emailDomain, $allowedDomains)) {
-            throw new DisplayException('Your email provider is not supported. Please contact support.');
+            return redirect()->route('auth.login', ['error' => 'Your email provider is not supported. Please contact support.']);
         }
 
         Http::withHeaders([

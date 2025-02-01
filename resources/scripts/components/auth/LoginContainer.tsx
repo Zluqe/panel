@@ -28,8 +28,18 @@ const LoginContainer = ({ history }: RouteComponentProps) => {
     const { clearFlashes, clearAndAddHttpError } = useFlash();
     const { enabled: recaptchaEnabled, siteKey } = useStoreState((state) => state.settings.data!.recaptcha);
 
+    // Handle error messages from the URL
     useEffect(() => {
         clearFlashes();
+
+        // Check if there's an error message in the URL params
+        const params = new URLSearchParams(window.location.search);
+        const error = params.get('error');
+
+        if (error) {
+            alert(error); // Show a JavaScript alert with the error message
+            window.history.replaceState({}, document.title, window.location.pathname); // Remove the error param from URL
+        }
     }, []);
 
     const onSubmit = (values: Values, { setSubmitting }: FormikHelpers<Values>) => {
