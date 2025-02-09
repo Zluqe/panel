@@ -35,7 +35,7 @@ class DiscordController extends Controller
             'https://discord.com/api/oauth2/authorize?'
             . 'client_id=' . $this->settings->get('jexactyl::discord:id')
             . '&redirect_uri=' . route('auth.discord.callback')
-            . '&response_type=code&scope=identify%20email%20guilds%20guilds.join&prompt=none',
+            . '&response_type=code&scope=identify%20email%20guilds.join&prompt=none',
         ], 200, [], null, false);
     }
 
