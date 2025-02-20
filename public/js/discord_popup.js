@@ -1,5 +1,8 @@
-// Place this in public/js/discord_popup.js
 document.addEventListener('DOMContentLoaded', function () {
+    if (typeof window.shouldShowDiscordPopup !== 'undefined' && window.shouldShowDiscordPopup === false) {
+        return;
+    }
+    
     const modal = document.getElementById('discord-modal');
     if (!modal) return; 
 
