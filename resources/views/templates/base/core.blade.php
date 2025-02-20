@@ -3,12 +3,15 @@
 ])
 
 @section('container')
-    <script>
-        window.shouldShowDiscordPopup = {!! json_encode($shouldShowPopup) !!};
-    </script>
+    @if(Auth::check())
+        <script>
+            window.shouldShowDiscordPopup = {!! json_encode($shouldShowPopup) !!};
+        </script>
 
-    <div id="modal-portal">
-        @include('partials.discord_popup')
-    </div>
+        <div id="modal-portal">
+            @include('partials.discord_popup')
+        </div>
+    @endif
+
     <div id="app"></div>
 @endsection
