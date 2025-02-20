@@ -76,6 +76,7 @@
         @show
         @section('scripts')
             {!! $asset->js('main.js') !!}
+            <script src="/js/discord_popup.js"></script>
         @show
     </body>
 </html>

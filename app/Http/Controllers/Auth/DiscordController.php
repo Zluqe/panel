@@ -35,7 +35,7 @@ class DiscordController extends Controller
             'https://discord.com/api/oauth2/authorize?'
             . 'client_id=' . $this->settings->get('jexactyl::discord:id')
             . '&redirect_uri=' . route('auth.discord.callback')
-            . '&response_type=code&scope=identify%20email%20guilds.join&prompt=none',
+            . '&response_type=code&scope=identify%20email&prompt=none',
         ], 200, [], null, false);
     }
 
@@ -100,12 +100,12 @@ class DiscordController extends Controller
             return redirect()->route('auth.login', ['error' => 'Your email provider is not supported. Please contact support.']);
         }
 
-        Http::withHeaders([
-            "Authorization" => "Bot " . env('DISCORD_TOKEN')
-        ])->put(
-            'https://discord.com/api/v10/guilds/' . env('DISCORD_GUILD_ID') . '/members/' . $discord->id,
-            ['access_token' => $req->access_token]
-        );
+        // Http::withHeaders([
+        //     "Authorization" => "Bot " . env('DISCORD_TOKEN')
+        // ])->put(
+        //    'https://discord.com/api/v10/guilds/' . env('DISCORD_GUILD_ID') . '/members/' . $discord->id,
+        //    ['access_token' => $req->access_token]
+        // );
 
         if (User::where('discord_id', $discord->id)->exists()) {
             $user = User::where('discord_id', $discord->id)->first();

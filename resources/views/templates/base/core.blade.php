@@ -3,6 +3,8 @@
 ])
 
 @section('container')
-    <div id="modal-portal"></div>
+    <div id="modal-portal">
+        @include('partials.discord_popup')
+    </div>
     <div id="app"></div>
 @endsection
