@@ -3,6 +3,10 @@
 ])
 
 @section('container')
+    <script>
+        window.shouldShowDiscordPopup = {!! json_encode($shouldShowPopup) !!};
+    </script>
+
     <div id="modal-portal">
         @include('partials.discord_popup')
     </div>
