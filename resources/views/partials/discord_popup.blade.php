@@ -16,7 +16,7 @@
 
     /* Smaller, dark modal box */
     .modal-content {
-        background-color: #1f2937;
+        background-color: #222325;
         color: #fff;
         border-radius: 0.5rem;
         padding: 1.5rem;
