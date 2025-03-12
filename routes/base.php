@@ -1,6 +1,7 @@
 <?php
 
 use Jexactyl\Http\Controllers\Base;
+use Jexactyl\Http\Controllers\CouponRedemptionController;
 use Illuminate\Support\Facades\Route;
 use Jexactyl\Http\Middleware\RequireTwoFactorAuthentication;
 
@@ -17,3 +18,8 @@ Route::get('/{react}', [Base\IndexController::class, 'index'])
     ->where('react', '^(?!(\/)?(api|auth|admin|daemon)).+');
 
 Route::post('/stripe/listen', [Base\StripeController::class, 'index']);
+
+// Coupon Redemption Route
+Route::post('/coupon/redeem', [CouponRedemptionController::class, 'redeem'])
+    ->middleware('auth')
+    ->name('coupon.redeem');
