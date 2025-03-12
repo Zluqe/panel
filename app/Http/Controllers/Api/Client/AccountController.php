@@ -63,13 +63,8 @@ class AccountController extends ClientApiController
         $user = $this->updateService->handle($request->user(), $request->validated());
 
         $guard = $this->manager->guard();
-        // If you do not update the user in the session you'll end up working with a
-        // cached copy of the user that does not include the updated password. Do this
-        // to correctly store the new user details in the guard and allow the logout
-        // other devices functionality to work.
         $guard->setUser($user);
 
-        // This method doesn't exist in the stateless Sanctum world.
         if (method_exists($guard, 'logoutOtherDevices')) {
             $guard->logoutOtherDevices($request->input('password'));
         }
@@ -103,6 +98,11 @@ class AccountController extends ClientApiController
     }
 
     /**
+     * Redeem a coupon for the authenticated user.
+     *
+     * This method checks the coupon code, verifies it hasn’t expired or been used up,
+     * and ensures that the current user (based on their username) hasn't already redeemed it.
+     *
      * @throws DisplayException
      */
     public function coupon(Request $request)
@@ -118,9 +118,33 @@ class AccountController extends ClientApiController
         if ($coupon->getAttribute('uses') < 1) {
             throw new DisplayException('This coupon has no uses left.');
         }
+
+        $username = $request->user()->username;
+
+        // Check if this user already redeemed the coupon.
+        $exists = DB::table('coupon_redemptions')
+            ->where('coupon_id', $coupon->id)
+            ->where('username', $username)
+            ->exists();
+        if ($exists) {
+            throw new DisplayException('You have already redeemed this coupon.');
+        }
+
+        // Insert a new coupon redemption record.
+        DB::table('coupon_redemptions')->insert([
+            'coupon_id'  => $coupon->id,
+            'username'   => $username,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Decrement the coupon's available uses.
+        $coupon->uses = $coupon->uses - 1;
+        $coupon->save();
+
+        // Credit the user's store balance.
         $balance = $request->user()->store_balance;
         $request->user()->update(['store_balance' => $balance + $coupon->cr_amount]);
-        Coupon::query()->where('code', $code)->update(['uses' => $coupon->uses - 1]);
 
         return new JsonResponse([], Response::HTTP_NO_CONTENT);
     }
