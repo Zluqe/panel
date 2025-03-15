@@ -72,8 +72,8 @@ Route::group(['prefix' => '/'], function () {
         Route::get('/', [Jexactyl\CouponsController::class, 'index']);
         Route::patch('/', [Jexactyl\CouponsController::class, 'update'])->name('admin.jexactyl.coupons');
         Route::post('/store', [Jexactyl\CouponsController::class, 'store'])->name('admin.jexactyl.coupons.store');
-    });
-});
+        Route::delete('/{id}', [Jexactyl\CouponsController::class, 'destroy'])->name('admin.jexactyl.coupons.destroy');
+    });    
 
 /*
 |--------------------------------------------------------------------------

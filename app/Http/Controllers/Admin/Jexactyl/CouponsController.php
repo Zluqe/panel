@@ -71,4 +71,20 @@ class CouponsController extends Controller
 
         return redirect()->route('admin.jexactyl.coupons');
     }
+
+    /**
+     * Delete a coupon from the system.
+     *
+     * @param int $id
+     * @return RedirectResponse
+     */
+    public function destroy(int $id): RedirectResponse
+    {
+        $coupon = Coupon::findOrFail($id);
+        $coupon->delete();
+    
+        $this->alert->success('Coupon deleted successfully.')->flash();
+        return redirect()->route('admin.jexactyl.coupons');
+    }
+    
 }

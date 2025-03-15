@@ -97,6 +97,7 @@
                             <th>Uses Remaining</th>
                             <th>Expires At</th>
                             <th>Expired</th>
+                            <th>Actions</th>
                         </tr>
                         @foreach($coupons as $coupon)
                             <tr>
@@ -106,6 +107,15 @@
                                 <td>{{ $coupon->uses }}</td>
                                 <td>{{ $coupon->expires }}</td>
                                 <td>@if($coupon->expired) Yes @else No @endif</td>
+                                <td>
+                                    <form action="{{ route('admin.jexactyl.coupons.destroy', $coupon->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this coupon?');" style="display:inline;">
+                                        {!! csrf_field() !!}
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-xs btn-danger" title="Delete Coupon">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
                             </tr>
                         @endforeach
                         </tbody>
