@@ -44,9 +44,7 @@ Route::group(['prefix' => '/'], function () {
 
     Route::group(['prefix' => '/approvals'], function () {
         Route::get('/', [Jexactyl\ApprovalsController::class, 'index']);
-
         Route::patch('/', [Jexactyl\ApprovalsController::class, 'update'])->name('admin.jexactyl.approvals');
-
         Route::post('/deny/{id}', [Jexactyl\ApprovalsController::class, 'deny'])->name('admin.jexactyl.approvals.deny');
         Route::post('/approve/all', [Jexactyl\ApprovalsController::class, 'bulkAction'])->name('admin.jexactyl.approvals.all');
         Route::post('/approve/{id}', [Jexactyl\ApprovalsController::class, 'approve'])->name('admin.jexactyl.approvals.approve');
@@ -73,7 +71,8 @@ Route::group(['prefix' => '/'], function () {
         Route::patch('/', [Jexactyl\CouponsController::class, 'update'])->name('admin.jexactyl.coupons');
         Route::post('/store', [Jexactyl\CouponsController::class, 'store'])->name('admin.jexactyl.coupons.store');
         Route::delete('/{id}', [Jexactyl\CouponsController::class, 'destroy'])->name('admin.jexactyl.coupons.destroy');
-    });    
+    });
+});
 
 /*
 |--------------------------------------------------------------------------
