@@ -29,6 +29,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $r_eggs
  * @property int $r_database_hosts
  * @property int $r_server_databases
+ * @property int $r_server_subusers  // ADDED THIS PROPERTY
  * @property \Jexactyl\Models\User $tokenable
  * @property \Jexactyl\Models\User $user
  *
@@ -52,6 +53,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder|ApiKey whereRServerDatabases($value)
  * @method static \Illuminate\Database\Eloquent\Builder|ApiKey whereRServers($value)
  * @method static \Illuminate\Database\Eloquent\Builder|ApiKey whereRUsers($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ApiKey whereRServerSubusers($value)
  * @method static \Illuminate\Database\Eloquent\Builder|ApiKey whereToken($value)
  * @method static \Illuminate\Database\Eloquent\Builder|ApiKey whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|ApiKey whereUserId($value)
@@ -113,12 +115,22 @@ class ApiKey extends Model
      * Fields that are mass assignable.
      */
     protected $fillable = [
-        'r_server_subusers',
         'identifier',
         'token',
+        'r_server_subusers', // ADDED TO FILLABLE
         'allowed_ips',
         'memo',
         'last_used_at',
+        // Add other permission fields
+        'r_' . AdminAcl::RESOURCE_USERS,
+        'r_' . AdminAcl::RESOURCE_ALLOCATIONS,
+        'r_' . AdminAcl::RESOURCE_DATABASE_HOSTS,
+        'r_' . AdminAcl::RESOURCE_SERVER_DATABASES,
+        'r_' . AdminAcl::RESOURCE_EGGS,
+        'r_' . AdminAcl::RESOURCE_LOCATIONS,
+        'r_' . AdminAcl::RESOURCE_NESTS,
+        'r_' . AdminAcl::RESOURCE_NODES,
+        'r_' . AdminAcl::RESOURCE_SERVERS,
     ];
 
     /**
@@ -139,6 +151,7 @@ class ApiKey extends Model
         'allowed_ips' => 'nullable|array',
         'allowed_ips.*' => 'string',
         'last_used_at' => 'nullable|date',
+        'r_server_subusers' => 'integer|min:0|max:3',
         'r_' . AdminAcl::RESOURCE_USERS => 'integer|min:0|max:3',
         'r_' . AdminAcl::RESOURCE_ALLOCATIONS => 'integer|min:0|max:3',
         'r_' . AdminAcl::RESOURCE_DATABASE_HOSTS => 'integer|min:0|max:3',
@@ -207,5 +220,13 @@ class ApiKey extends Model
         $prefix = self::getPrefixForType($type);
 
         return $prefix . Str::random(self::IDENTIFIER_LENGTH - strlen($prefix));
+    }
+    
+    /**
+     * Get the validation rules for API keys.
+     */
+    public static function getRules(): array
+    {
+        return self::$validationRules;
     }
 }
