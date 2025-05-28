@@ -10,16 +10,14 @@ class StoreApplicationApiKeyRequest extends AdminFormRequest
 {
     /**
      * @throws \ReflectionException
+     * @throws \ReflectionException
      */
     public function rules(): array
     {
         $modelRules = ApiKey::getRules();
 
         return collect(AdminAcl::getResourceList())->mapWithKeys(function ($resource) use ($modelRules) {
-            $ruleKey = 'r_' . $resource;
-            return [
-                AdminAcl::COLUMN_IDENTIFIER . $resource => $modelRules[$ruleKey] ?? 'integer|min:0|max:3'
-            ];
+            return [AdminAcl::COLUMN_IDENTIFIER . $resource => $modelRules['r_' . $resource]];
         })->merge(['memo' => $modelRules['memo']])->toArray();
     }
 

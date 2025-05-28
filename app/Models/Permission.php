@@ -64,7 +64,6 @@ class Permission extends Model
     public const ACTION_SETTINGS_REINSTALL = 'settings.reinstall';
 
     public const ACTION_ACTIVITY_READ = 'activity.read';
-    public const SERVER_SUBUSER_READ_WRITE = 'servers.subusers:read-write';
 
     /**
      * Should timestamps be used on this model.
