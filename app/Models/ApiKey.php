@@ -97,6 +97,7 @@ class ApiKey extends Model
     protected $casts = [
         'allowed_ips' => 'array',
         'user_id' => 'int',
+        'r_server_subusers' => 'int',
         'r_' . AdminAcl::RESOURCE_USERS => 'int',
         'r_' . AdminAcl::RESOURCE_ALLOCATIONS => 'int',
         'r_' . AdminAcl::RESOURCE_DATABASE_HOSTS => 'int',
@@ -112,6 +113,7 @@ class ApiKey extends Model
      * Fields that are mass assignable.
      */
     protected $fillable = [
+        'r_server_subusers',
         'identifier',
         'token',
         'allowed_ips',
