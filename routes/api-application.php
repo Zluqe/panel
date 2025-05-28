@@ -108,6 +108,9 @@ Route::group(['prefix' => '/servers'], function () {
 
     Route::delete('/{server:id}', [Application\Servers\ServerController::class, 'delete']);
     Route::delete('/{server:id}/{force?}', [Application\Servers\ServerController::class, 'delete']);
+    
+    Route::post('/{server}/subusers', [Application\Servers\SubuserController::class, 'store'])->name('api.application.servers.subusers.store');
+    Route::delete('/{server}/subusers/{user}', [Application\Servers\SubuserController::class, 'destroy'])->name('api.application.servers.subusers.destroy');
 
     // Database Management Endpoint
     Route::group(['prefix' => '/{server:id}/databases'], function () {
