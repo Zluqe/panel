@@ -1,90 +1,78 @@
 <?php
 
-namespace Jexactyl\Http\Controllers\Admin\Jexactyl;
+namespace Jexactyl\Http\Controllers\Api\Application;
 
 use Carbon\Carbon;
-use Illuminate\View\View;
 use Jexactyl\Models\Coupon;
-use Illuminate\Http\RedirectResponse;
-use Prologue\Alerts\AlertsMessageBag;
-use Jexactyl\Exceptions\DisplayException;
+use Jexactyl\Models\ApiKey;
 use Jexactyl\Http\Controllers\Controller;
-use Jexactyl\Exceptions\Model\DataValidationException;
-use Jexactyl\Exceptions\Repository\RecordNotFoundException;
-use Jexactyl\Contracts\Repository\SettingsRepositoryInterface;
-use Jexactyl\Http\Requests\Admin\Jexactyl\Coupons\IndexFormRequest;
-use Jexactyl\Http\Requests\Admin\Jexactyl\Coupons\StoreFormRequest;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Jexactyl\Http\Requests\Api\Application\Coupons\StoreCouponRequest;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class CouponsController extends Controller
 {
-    public function __construct(private AlertsMessageBag $alert, private SettingsRepositoryInterface $settings)
+    public function store(StoreCouponRequest $request): array
     {
-    }
-
-    public function index(): View
-    {
-        return view('admin.jexactyl.coupons', [
-            'coupons' => Coupon::all(),
-            'enabled' => $this->settings->get('jexactyl::coupons:enabled'),
-        ]);
-    }
-
-    /**
-     * @throws DataValidationException
-     * @throws RecordNotFoundException
-     */
-    public function update(IndexFormRequest $request): RedirectResponse
-    {
-        foreach ($request->normalize() as $key => $value) {
-            $this->settings->set('jexactyl::coupons:' . $key, $value);
-        }
-
-        $this->alert->success('The coupons system has been successfully updated.')->flash();
-
-        return redirect()->route('admin.jexactyl.coupons');
-    }
-
-    /**
-     * @throws DisplayException
-     */
-    public function store(StoreFormRequest $request): RedirectResponse
-    {
-        if ($request->input('expires')) {
-            $expires_at = Carbon::now()->addHours($request->input('expires'));
+        // Get API key from authenticated user
+        $token = $request->user()->currentAccessToken();
+        
+        // Handle different token types
+        if ($token instanceof ApiKey) {
+            $apiKey = $token;
         } else {
-            $expires_at = null;
+            // Fallback for account tokens
+            $apiKey = ApiKey::find($token->tokenable_id);
         }
 
-        if (Coupon::where(['code' => $request->input('code')])->exists()) {
-            throw new DisplayException('You cannot create a coupon with an already existing code.');
+        // Verify we have a valid API key
+        if (!$apiKey) {
+            throw new AccessDeniedHttpException(
+                'Could not identify a valid API key for this request'
+            );
         }
 
-        Coupon::query()->insert([
-            'expires' => $expires_at,
-            'created_at' => Carbon::now(),
-            'code' => $request->input('code'),
-            'uses' => $request->input('uses'),
-            'cr_amount' => $request->input('credits'),
-        ]);
+        // Validate permissions (require level 2+)
+        if ($apiKey->r_coupons < 2) {
+            throw new AccessDeniedHttpException(
+                'Your API key does not have permission to create coupons. ' . 
+                'Required permission level: 2 or higher'
+            );
+        }
+        
+        // Check for duplicate coupon code
+        if (Coupon::where('code', $request->input('code'))->exists()) {
+            throw new ConflictHttpException('Coupon code already exists');
+        }
 
-        $this->alert->success('Successfully created a coupon.')->flash();
+        // Handle expiration time
+        $expires = null;
+        if ($request->filled('expires')) {
+            try {
+                $expires = Carbon::now()->addHours($request->input('expires'));
+            } catch (\InvalidArgumentException $e) {
+                throw new HttpException(422, 'Invalid expiration hours: Must be numeric');
+            }
+        }
 
-        return redirect()->route('admin.jexactyl.coupons');
+        // Create coupon
+        try {
+            $coupon = Coupon::create([
+                'code' => $request->input('code'),
+                'uses' => $request->input('uses'),
+                'cr_amount' => $request->input('credits'),
+                'expires' => $expires,
+                'created_at' => Carbon::now(),
+            ]);
+            
+            return [
+                'success' => true,
+                'data' => $coupon,
+                'message' => 'Successfully created coupon code',
+            ];
+        } catch (\Exception $e) {
+            throw new HttpException(500, 'Failed to create coupon: ' . $e->getMessage());
+        }
     }
-
-    /**
-     * Delete a coupon from the system.
-     *
-     * @param int $id
-     * @return RedirectResponse
-     */
-    public function destroy(int $id): RedirectResponse
-    {
-        $coupon = Coupon::findOrFail($id);
-        $coupon->delete();
-    
-        $this->alert->success('Coupon deleted successfully.')->flash();
-        return redirect()->route('admin.jexactyl.coupons');
-    }
-    
 }
