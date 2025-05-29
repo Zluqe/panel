@@ -139,8 +139,3 @@ Route::group(['prefix' => '/nests'], function () {
         Route::get('/{egg:id}', [Application\Nests\EggController::class, 'view'])->name('api.application.nests.eggs.view');
     });
 });
-
-// Coupon Route
-Route::group(['prefix' => '/coupons'], function () {
-    Route::post('/', [\Jexactyl\Http\Controllers\Api\Application\CouponsController::class, 'store']);
-});

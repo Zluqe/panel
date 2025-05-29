@@ -106,7 +106,6 @@ class ApiKey extends Model
         'r_' . AdminAcl::RESOURCE_NESTS => 'int',
         'r_' . AdminAcl::RESOURCE_NODES => 'int',
         'r_' . AdminAcl::RESOURCE_SERVERS => 'int',
-        'r_coupons' => 'int',
     ];
 
     /**
@@ -147,7 +146,6 @@ class ApiKey extends Model
         'r_' . AdminAcl::RESOURCE_NESTS => 'integer|min:0|max:3',
         'r_' . AdminAcl::RESOURCE_NODES => 'integer|min:0|max:3',
         'r_' . AdminAcl::RESOURCE_SERVERS => 'integer|min:0|max:3',
-        'r_coupons' => 'integer|min:0|max:3', 
     ];
 
     protected $dates = [

@@ -71,7 +71,6 @@ class Kernel extends HttpKernel
         ],
         'application-api' => [
             SubstituteBindings::class,
-            TrackAPIKey::class,
             AuthenticateApplicationUser::class,
         ],
         'client-api' => [

@@ -40,23 +40,6 @@
                                     </td>
                                 </tr>
                             @endforeach
-                            
-                            <!-- Add Coupon Permissions -->
-                            <tr>
-                                <td class="col-sm-3 strong">Coupons</td>
-                                <td class="col-sm-3 radio radio-primary text-center">
-                                    <input type="radio" id="r_coupons" name="r_coupons" value="{{ $permissions['r'] }}">
-                                    <label for="r_coupons">Read</label>
-                                </td>
-                                <td class="col-sm-3 radio radio-primary text-center">
-                                    <input type="radio" id="rw_coupons" name="r_coupons" value="{{ $permissions['rw'] }}">
-                                    <label for="rw_coupons">Read &amp; Write</label>
-                                </td>
-                                <td class="col-sm-3 radio text-center">
-                                    <input type="radio" id="n_coupons" name="r_coupons" value="{{ $permissions['n'] }}" checked>
-                                    <label for="n_coupons">None</label>
-                                </td>
-                            </tr>
                         </table>
                     </div>
                 </div>

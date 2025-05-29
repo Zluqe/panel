@@ -17,7 +17,7 @@ abstract class ApplicationApiRequest extends FormRequest
      * The resource that should be checked when performing the authorization
      * function for this request.
      */
-    protected ?string $resource = null;
+    protected ?string $resource;
 
     /**
      * The permission level that a given API key should have for accessing
@@ -33,9 +33,8 @@ abstract class ApplicationApiRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        // Allow authorization to be handled by controllers for specific endpoints
-        if ($this->resource === null) {
-            return true;
+        if (is_null($this->resource)) {
+            throw new JexactylException('An ACL resource must be defined on API requests.');
         }
 
         $token = $this->user()->currentAccessToken();
