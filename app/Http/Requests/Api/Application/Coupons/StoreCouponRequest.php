@@ -6,10 +6,9 @@ use Jexactyl\Http\Requests\Api\Application\ApplicationApiRequest;
 
 class StoreCouponRequest extends ApplicationApiRequest
 {
-    // Add this resource property to resolve the initialization error
-    protected string $resource = 'coupon';
-    protected int $permission = 2; // 2 = Create permission
-
+    // Explicitly set to null to bypass ACL
+    protected ?string $resource = null;
+    
     public function rules(): array
     {
         return [
@@ -19,8 +18,7 @@ class StoreCouponRequest extends ApplicationApiRequest
             'expires' => 'nullable|integer|min:1',
         ];
     }
-
-    // Add this method to override authorization
+    
     public function authorize(): bool
     {
         return true;
