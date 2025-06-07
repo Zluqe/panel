@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Http;
 use Jexactyl\Exceptions\DisplayException;
 use Jexactyl\Http\Controllers\Controller;
 use Jexactyl\Services\Users\UserCreationService;
-use Jexactyl\Exceptions\Model\DataValidationException;
 use Jexactyl\Contracts\Repository\SettingsRepositoryInterface;
 
 class DiscordController extends Controller
@@ -41,48 +40,47 @@ class DiscordController extends Controller
         $userIp = $request->getClientIp();
 
         //
-        // ─── WHITELIST BYPASS ───────────────────────────────────────────────
+        // ─── ENHANCED VPN/PROXY DETECTION ───────────────────────────────────
         //
-        $whitelistFile = base_path('whitelist_ip.txt');
-        if (file_exists($whitelistFile)) {
-            $whitelisted = array_map('trim', file(
-                $whitelistFile,
-                FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES
-            ));
-            if (in_array($userIp, $whitelisted, true)) {
-                return $this->proceedWithDiscordLogin($request, $userIp);
+        $proxyKey = env('PROXYCHECK_KEY');
+        if (!empty($proxyKey)) {
+            $url = "https://proxycheck.io/v2/{$userIp}?key={$proxyKey}&vpn=1&asn=1&risk=1";
+            $response = Http::get($url);
+            $data = $response->json();
+
+            // Validate API response status :cite[5]:cite[9]
+            if (($data['status'] ?? '') !== 'ok') {
+                throw new DisplayException('Failed to verify IP status. Please try again later.');
+            }
+
+            $info = $data[$userIp] ?? [];
+            $isProxy = ($info['proxy'] ?? 'no') === 'yes';
+            $type = strtolower($info['type'] ?? '');
+            $isVpn = in_array($type, ['vpn', 'openvpn', 'tor', 'hosting'], true);
+            $isHosting = ($info['is_hosting'] ?? false) === true;
+            $highRisk = ($info['risk'] ?? 0) > 85; // Risk threshold 85/100 :cite[5]
+            
+            if ($isProxy || $isVpn || $isHosting || $highRisk) {
+                $reason = match(true) {
+                    $isProxy => 'Proxy',
+                    $isVpn => 'VPN',
+                    $isHosting => 'Hosting Service',
+                    $highRisk => 'High-Risk IP',
+                    default => 'Suspicious Activity'
+                };
+                throw new DisplayException("{$reason} detected. Please disable it to proceed.");
             }
         }
         //
-        // ─── END WHITELIST BYPASS ───────────────────────────────────────────
+        // ─── END DETECTION ─────────────────────────────────────────────────
 
-        //
-        // ─── PROXYCHECK.IO LOOKUP ───────────────────────────────────────────
-        //
-        $proxyKey = env('PROXYCHECK_KEY');
-        $response = Http::get("https://proxycheck.io/v2/{$userIp}?key={$proxyKey}&vpn=1");
-        $data     = $response->json();
-
-        if (($data['status'] ?? '') !== 'ok') {
-            throw new DisplayException('Failed to verify IP status. Please try again later.');
-        }
-
-        $info    = $data[$userIp] ?? [];
-        $isProxy = (($info['proxy'] ?? 'no') === 'yes');
-        $type    = strtolower($info['type'] ?? '');
-        $isVpn   = in_array($type, ['vpn', 'openvpn'], true);
-
-        if ($isProxy || $isVpn) {
-            throw new DisplayException('VPN or Proxy detected. Please disable it to proceed.');
-        }
-        //
-        // ─── END PROXYCHECK.IO LOOKUP ────────────────────────────────────────
-
-        return $this->proceedWithDiscordLogin($request, $userIp);
+        return $this->proceedWithDiscordLogin($request);
     }
 
-    private function proceedWithDiscordLogin(Request $request, string $userIp)
+    private function proceedWithDiscordLogin(Request $request)
     {
+        $userIp = $request->getClientIp();
+        
         // Exchange code for token
         $tokenResp = Http::asForm()->post('https://discord.com/api/oauth2/token', [
             'client_id'     => $this->settings->get('jexactyl::discord:id'),
@@ -93,12 +91,12 @@ class DiscordController extends Controller
         ]);
 
         if (! $tokenResp->ok()) {
-            return;
+            throw new DisplayException('Failed to authenticate with Discord');
         }
         $req = json_decode($tokenResp->body());
 
         if (preg_match('(email|guilds|identify|guilds\.join)', $req->scope) !== 1) {
-            return;
+            throw new DisplayException('Insufficient OAuth scopes granted');
         }
 
         // Fetch user info
@@ -159,7 +157,7 @@ class DiscordController extends Controller
         try {
             $this->creationService->handle($data);
         } catch (\Exception $e) {
-            return;
+            throw new DisplayException('Failed to create user account');
         }
 
         $user = User::where('username', $discord->id)->first();

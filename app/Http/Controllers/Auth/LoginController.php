@@ -33,47 +33,43 @@ class LoginController extends AbstractLoginController
         $userIp = $request->getClientIp();
 
         //
-        // ─── WHITELIST BYPASS ───────────────────────────────────────────────
+        // ─── ENHANCED VPN/PROXY DETECTION ───────────────────────────────────
         //
-        $whitelistFile = base_path('whitelist_ip.txt');
-        if (file_exists($whitelistFile)) {
-            $whitelisted = array_map('trim', file(
-                $whitelistFile,
-                FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES
-            ));
-            if (in_array($userIp, $whitelisted, true)) {
-                return $this->attemptLogin($request);
+        $proxyKey = env('PROXYCHECK_KEY');
+        if (!empty($proxyKey)) {
+            $url = "https://proxycheck.io/v2/{$userIp}?key={$proxyKey}&vpn=1&asn=1&risk=1";
+            $response = Http::get($url);
+            $data = $response->json();
+
+            // Validate API response status :cite[5]:cite[9]
+            if (($data['status'] ?? '') !== 'ok') {
+                return response()->json(['error' => 'Failed to verify IP status. Please try again later.'], 403);
+            }
+
+            $info = $data[$userIp] ?? [];
+            $isProxy = ($info['proxy'] ?? 'no') === 'yes';
+            $type = strtolower($info['type'] ?? '');
+            $isVpn = in_array($type, ['vpn', 'openvpn', 'tor', 'hosting'], true);
+            $isHosting = ($info['is_hosting'] ?? false) === true;
+            $highRisk = ($info['risk'] ?? 0) > 85; // Risk threshold 85/100 :cite[5]
+            
+            if ($isProxy || $isVpn || $isHosting || $highRisk) {
+                $reason = match(true) {
+                    $isProxy => 'Proxy',
+                    $isVpn => 'VPN',
+                    $isHosting => 'Hosting Service',
+                    $highRisk => 'High-Risk IP',
+                    default => 'Suspicious Activity'
+                };
+                return response()->json(['error' => "{$reason} detected. Please disable it to proceed."], 403);
             }
         }
         //
-        // ─── END WHITELIST BYPASS ───────────────────────────────────────────
+        // ─── END DETECTION ─────────────────────────────────────────────────
 
-        //
-        // ─── PROXYCHECK.IO LOOKUP ───────────────────────────────────────────
-        //
-        $proxyKey = env('PROXYCHECK_KEY');
-        $response = Http::get("https://proxycheck.io/v2/{$userIp}?key={$proxyKey}&vpn=1");
-        $data = $response->json();
-
-        if (($data['status'] ?? '') !== 'ok') {
-            return response()->json(['error' => 'Failed to verify IP status. Please try again later.'], 403);
-        }
-
-        $info    = $data[$userIp] ?? [];
-        $isProxy = (($info['proxy'] ?? 'no') === 'yes');
-        $type    = strtolower($info['type'] ?? '');
-        $isVpn   = in_array($type, ['vpn', 'openvpn'], true);
-
-        if ($isProxy || $isVpn) {
-            return response()->json(['error' => 'VPN or Proxy detected. Please disable it to proceed.'], 403);
-        }
-        //
-        // ─── END PROXYCHECK.IO LOOKUP ────────────────────────────────────────
-
-        return $this->attemptLogin($request); // Removed $userIp argument
+        return $this->attemptLogin($request);
     }
 
-    // Updated method signature to match parent (only Request $request)
     protected function attemptLogin(Request $request): JsonResponse
     {
         if ($this->hasTooManyLoginAttempts($request)) {
