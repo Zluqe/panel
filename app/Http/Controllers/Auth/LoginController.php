@@ -73,7 +73,7 @@ class LoginController extends AbstractLoginController
         return $this->attemptLogin($request, $userIp);
     }
 
-    private function attemptLogin(Request $request, string $userIp): JsonResponse
+    protected function attemptLogin(Request $request, string $userIp): JsonResponse
     {
         if ($this->hasTooManyLoginAttempts($request)) {
             $this->fireLockoutEvent($request);
@@ -82,7 +82,8 @@ class LoginController extends AbstractLoginController
 
         try {
             $username = $request->input('user');
-            $user     = User::query()
+            /** @var User $user */
+            $user = User::query()
                 ->where($this->getField($username), $username)
                 ->firstOrFail();
         } catch (ModelNotFoundException $e) {
@@ -110,8 +111,8 @@ class LoginController extends AbstractLoginController
 
         return new JsonResponse([
             'data' => [
-                'complete'            => false,
-                'confirmation_token'  => $token,
+                'complete'           => false,
+                'confirmation_token' => $token,
             ],
         ]);
     }
