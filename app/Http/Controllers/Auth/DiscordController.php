@@ -20,146 +20,156 @@ class DiscordController extends Controller
 
     public function __construct(
         UserCreationService $creationService,
-        SettingsRepositoryInterface $settings,
+        SettingsRepositoryInterface $settings
     ) {
         $this->creationService = $creationService;
-        $this->settings = $settings;
+        $this->settings        = $settings;
     }
 
-    /**
-     * Uses the Discord API to return a user object.
-     */
     public function index(): JsonResponse
     {
         return new JsonResponse([
-            'https://discord.com/api/oauth2/authorize?'
-            . 'client_id=' . $this->settings->get('jexactyl::discord:id')
-            . '&redirect_uri=' . route('auth.discord.callback')
-            . '&response_type=code&scope=identify%20email&prompt=none',
+            'https://discord.com/api/oauth2/authorize?' .
+            'client_id='    . $this->settings->get('jexactyl::discord:id') .
+            '&redirect_uri=' . route('auth.discord.callback') .
+            '&response_type=code&scope=identify%20email%20guilds%20guilds.join&prompt=none',
         ], 200, [], null, false);
     }
 
-    /**
-     * Returns data from the Discord API to login.
-     *
-     * @throws DisplayException
-     * @throws DataValidationException
-     */
     public function callback(Request $request)
     {
-        // Get user's IP address
         $userIp = $request->getClientIp();
 
-        // Retrieve VPNAPI.io key from .env
-        $vpnApiKey = env('VPNAPI_KEY');
+        //
+        // ─── WHITELIST BYPASS ───────────────────────────────────────────────
+        //
+        $whitelistFile = base_path('whitelist_ip.txt');
+        if (file_exists($whitelistFile)) {
+            $whitelisted = array_map('trim', file(
+                $whitelistFile,
+                FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES
+            ));
+            if (in_array($userIp, $whitelisted, true)) {
+                return $this->proceedWithDiscordLogin($request, $userIp);
+            }
+        }
+        //
+        // ─── END WHITELIST BYPASS ───────────────────────────────────────────
 
-        // Check if the IP is a VPN using VPNAPI.io
-        $vpnCheckResponse = Http::get("https://vpnapi.io/api/{$userIp}?key={$vpnApiKey}");
+        //
+        // ─── PROXYCHECK.IO LOOKUP ───────────────────────────────────────────
+        //
+        $proxyKey = env('PROXYCHECK_KEY');
+        $response = Http::get("https://proxycheck.io/v2/{$userIp}?key={$proxyKey}&vpn=1");
+        $data     = $response->json();
 
-        if ($vpnCheckResponse->failed()) {
-            return redirect()->route('auth.login', ['error' => 'Failed to verify VPN status. Please try again later.']);
+        if (($data['status'] ?? '') !== 'ok') {
+            throw new DisplayException('Failed to verify IP status. Please try again later.');
         }
 
-        $vpnData = $vpnCheckResponse->json();
+        $info    = $data[$userIp] ?? [];
+        $isProxy = (($info['proxy'] ?? 'no') === 'yes');
+        $type    = strtolower($info['type'] ?? '');
+        $isVpn   = in_array($type, ['vpn', 'openvpn'], true);
 
-        // Block VPN, Proxy, and Tor
-        if (
-            (isset($vpnData['security']['vpn']) && $vpnData['security']['vpn'] === true) ||
-            (isset($vpnData['security']['proxy']) && $vpnData['security']['proxy'] === true) ||
-            (isset($vpnData['security']['tor']) && $vpnData['security']['tor'] === true) ||
-            (isset($vpnData['security']['relay']) && $vpnData['security']['relay'] === true)
-        ) {
-            return redirect()->route('auth.login', ['error' => 'VPN, Proxy, or Tor detected. Please disable it to proceed.']);
+        if ($isProxy || $isVpn) {
+            throw new DisplayException('VPN or Proxy detected. Please disable it to proceed.');
         }
+        //
+        // ─── END PROXYCHECK.IO LOOKUP ────────────────────────────────────────
 
-        // Proceed with Discord authentication
-        $code = Http::asForm()->post('https://discord.com/api/oauth2/token', [
-            'client_id' => $this->settings->get('jexactyl::discord:id'),
+        return $this->proceedWithDiscordLogin($request, $userIp);
+    }
+
+    private function proceedWithDiscordLogin(Request $request, string $userIp)
+    {
+        // Exchange code for token
+        $tokenResp = Http::asForm()->post('https://discord.com/api/oauth2/token', [
+            'client_id'     => $this->settings->get('jexactyl::discord:id'),
             'client_secret' => $this->settings->get('jexactyl::discord:secret'),
-            'grant_type' => 'authorization_code',
-            'code' => $request->input('code'),
-            'redirect_uri' => route('auth.discord.callback'),
+            'grant_type'    => 'authorization_code',
+            'code'          => $request->input('code'),
+            'redirect_uri'  => route('auth.discord.callback'),
         ]);
 
-        if (!$code->ok()) {
+        if (! $tokenResp->ok()) {
+            return;
+        }
+        $req = json_decode($tokenResp->body());
+
+        if (preg_match('(email|guilds|identify|guilds\.join)', $req->scope) !== 1) {
             return;
         }
 
-        $req = json_decode($code->body());
-        if (preg_match('(email|guilds|identify|guilds.join)', $req->scope) !== 1) {
-            return;
-        }
+        // Fetch user info
+        $discord = json_decode(
+            Http::withHeaders(['Authorization' => 'Bearer ' . $req->access_token])
+                ->asForm()
+                ->get('https://discord.com/api/users/@me')
+                ->body()
+        );
 
-        $discord = json_decode(Http::withHeaders(['Authorization' => 'Bearer ' . $req->access_token])->asForm()->get('https://discord.com/api/users/@me')->body());
-
-        // Email Whitelist Validation
-        $allowedDomains = ['gmail.com', 'outlook.com', 'yahoo.com', 'icloud.com', 'hotmail.com', 'proton.me'];
+        // Email whitelist
+        $allowedDomains = [
+            'gmail.com', 'outlook.com', 'yahoo.com',
+            'icloud.com', 'hotmail.com', 'proton.me',
+        ];
         $emailDomain = substr(strrchr($discord->email, "@"), 1);
-
-        if (!in_array($emailDomain, $allowedDomains)) {
-            return redirect()->route('auth.login', ['error' => 'Your email provider is not supported. Please contact support.']);
+        if (! in_array($emailDomain, $allowedDomains, true)) {
+            throw new DisplayException('Your email provider is not supported. Please contact support.');
         }
 
-        // Http::withHeaders([
-        //     "Authorization" => "Bot " . env('DISCORD_TOKEN')
-        // ])->put(
-        //    'https://discord.com/api/v10/guilds/' . env('DISCORD_GUILD_ID') . '/members/' . $discord->id,
-        //    ['access_token' => $req->access_token]
-        // );
+        // Add to guild
+        Http::withHeaders([
+            'Authorization' => 'Bot ' . env('DISCORD_TOKEN'),
+        ])->put(
+            'https://discord.com/api/v10/guilds/' . env('DISCORD_GUILD_ID') . '/members/' . $discord->id,
+            ['access_token' => $req->access_token]
+        );
 
+        // Existing user?
         if (User::where('discord_id', $discord->id)->exists()) {
             $user = User::where('discord_id', $discord->id)->first();
             Auth::loginUsingId($user->id, true);
-
-            return redirect('/');
-        } else {
-            $approved = true;
-
-            if ($this->settings->get('jexactyl::discord:enabled') != 'true') {
-                return;
-            }
-            if ($this->settings->get('jexactyl::approvals:enabled') == 'true') {
-                $approved = false;
-            }
-
-            $data = [
-                'approved' => $approved,
-                'email' => $discord->email,
-                'username' => $discord->id,
-                'discord_id' => $discord->id,
-                'name_first' => $discord->username,
-                'name_last' => $discord->discriminator,
-                'password' => $this->genString(),
-                'ip' => $userIp,
-                'store_cpu' => $this->settings->get('jexactyl::registration:cpu', 0),
-                'store_memory' => $this->settings->get('jexactyl::registration:memory', 0),
-                'store_disk' => $this->settings->get('jexactyl::registration:disk', 0),
-                'store_slots' => $this->settings->get('jexactyl::registration:slot', 0),
-                'store_ports' => $this->settings->get('jexactyl::registration:port', 0),
-                'store_backups' => $this->settings->get('jexactyl::registration:backup', 0),
-                'store_databases' => $this->settings->get('jexactyl::registration:database', 0),
-            ];
-
-            try {
-                $this->creationService->handle($data);
-            } catch (\Exception $e) {
-                return;
-            }
-            $user = User::where('username', $discord->id)->first();
-            Auth::loginUsingId($user->id, true);
-
             return redirect('/');
         }
+
+        // New user creation
+        $approved = $this->settings->get('jexactyl::discord:enabled') === 'true'
+                 && $this->settings->get('jexactyl::approvals:enabled') !== 'true';
+
+        $data = [
+            'approved'       => $approved,
+            'email'          => $discord->email,
+            'username'       => $discord->id,
+            'discord_id'     => $discord->id,
+            'name_first'     => $discord->username,
+            'name_last'      => $discord->discriminator,
+            'password'       => $this->genString(),
+            'ip'             => $userIp,
+            'store_cpu'      => $this->settings->get('jexactyl::registration:cpu', 0),
+            'store_memory'   => $this->settings->get('jexactyl::registration:memory', 0),
+            'store_disk'     => $this->settings->get('jexactyl::registration:disk', 0),
+            'store_slots'    => $this->settings->get('jexactyl::registration:slot', 0),
+            'store_ports'    => $this->settings->get('jexactyl::registration:port', 0),
+            'store_backups'  => $this->settings->get('jexactyl::registration:backup', 0),
+            'store_databases'=> $this->settings->get('jexactyl::registration:database', 0),
+        ];
+
+        try {
+            $this->creationService->handle($data);
+        } catch (\Exception $e) {
+            return;
+        }
+
+        $user = User::where('username', $discord->id)->first();
+        Auth::loginUsingId($user->id, true);
+        return redirect('/');
     }
 
-    /**
-     * Returns a string used for creating a users
-     * username and password on the Panel.
-     */
-    public function genString(): string
+    private function genString(): string
     {
         $chars = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-
         return substr(str_shuffle($chars), 0, 16);
     }
 }

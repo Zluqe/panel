@@ -15,57 +15,66 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class LoginController extends AbstractLoginController
 {
-    /**
-     * LoginController constructor.
-     */
-    public function __construct(private ViewFactory $view)
+    private ViewFactory $view;
+
+    public function __construct(ViewFactory $view)
     {
         parent::__construct();
+        $this->view = $view;
     }
 
-    /**
-     * Handle all incoming requests for the authentication routes and render the
-     * base authentication view component. React will take over at this point and
-     * turn the login area into an SPA.
-     */
     public function index(): View
     {
         return $this->view->make('templates/auth.core');
     }
 
-    /**
-     * Handle a login request to the application.
-     *
-     * @throws \Jexactyl\Exceptions\DisplayException
-     * @throws \Illuminate\Validation\ValidationException
-     */
     public function login(Request $request): JsonResponse
     {
-        // Get user's IP address
         $userIp = $request->getClientIp();
 
-        // Retrieve VPNAPI.io key from .env
-        $vpnApiKey = env('VPNAPI_KEY');
+        //
+        // ─── WHITELIST BYPASS ───────────────────────────────────────────────
+        //
+        $whitelistFile = base_path('whitelist_ip.txt');
+        if (file_exists($whitelistFile)) {
+            $whitelisted = array_map('trim', file(
+                $whitelistFile,
+                FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES
+            ));
+            if (in_array($userIp, $whitelisted, true)) {
+                return $this->attemptLogin($request, $userIp);
+            }
+        }
+        //
+        // ─── END WHITELIST BYPASS ───────────────────────────────────────────
 
-        // Check if the IP
-        $vpnCheckResponse = Http::get("https://vpnapi.io/api/{$userIp}?key={$vpnApiKey}");
+        //
+        // ─── PROXYCHECK.IO LOOKUP ───────────────────────────────────────────
+        //
+        $proxyKey = env('PROXYCHECK_KEY');
+        $response = Http::get("https://proxycheck.io/v2/{$userIp}?key={$proxyKey}&vpn=1");
+        $data = $response->json();
 
-        if ($vpnCheckResponse->failed()) {
-            return response()->json(['error' => 'Failed to verify VPN status. Please try again later.'], 403);
+        if (($data['status'] ?? '') !== 'ok') {
+            return response()->json(['error' => 'Failed to verify IP status. Please try again later.'], 403);
         }
 
-        $vpnData = $vpnCheckResponse->json();
+        $info    = $data[$userIp] ?? [];
+        $isProxy = (($info['proxy'] ?? 'no') === 'yes');
+        $type    = strtolower($info['type'] ?? '');
+        $isVpn   = in_array($type, ['vpn', 'openvpn'], true);
 
-        // Block VPN, Proxy, and Tor
-        if (
-            (isset($vpnData['security']['vpn']) && $vpnData['security']['vpn'] === true) ||
-            (isset($vpnData['security']['proxy']) && $vpnData['security']['proxy'] === true) ||
-            (isset($vpnData['security']['tor']) && $vpnData['security']['tor'] === true) ||
-            (isset($vpnData['security']['relay']) && $vpnData['security']['relay'] === true)
-        ) {
-            return response()->json(['error' => 'VPN, Proxy, or Tor detected. Please disable it to proceed.'], 403);
+        if ($isProxy || $isVpn) {
+            return response()->json(['error' => 'VPN or Proxy detected. Please disable it to proceed.'], 403);
         }
+        //
+        // ─── END PROXYCHECK.IO LOOKUP ────────────────────────────────────────
 
+        return $this->attemptLogin($request, $userIp);
+    }
+
+    private function attemptLogin(Request $request, string $userIp): JsonResponse
+    {
         if ($this->hasTooManyLoginAttempts($request)) {
             $this->fireLockoutEvent($request);
             $this->sendLockoutResponse($request);
@@ -73,37 +82,36 @@ class LoginController extends AbstractLoginController
 
         try {
             $username = $request->input('user');
-
-            /** @var \Jexactyl\Models\User $user */
-            $user = User::query()->where($this->getField($username), $username)->firstOrFail();
-        } catch (ModelNotFoundException) {
+            $user     = User::query()
+                ->where($this->getField($username), $username)
+                ->firstOrFail();
+        } catch (ModelNotFoundException $e) {
             $this->sendFailedLoginResponse($request);
         }
 
-        // Ensure that the account is using a valid username and password before trying to
-        // continue. Previously this was handled in the 2FA checkpoint, however that has
-        // a flaw in which you can discover if an account exists simply by seeing if you
-        // can proceed to the next step in the login process.
-        if (!password_verify($request->input('password'), $user->password)) {
+        if (! password_verify($request->input('password'), $user->password)) {
             $this->sendFailedLoginResponse($request, $user);
         }
 
-        if (!$user->use_totp) {
+        if (! $user->use_totp) {
             return $this->sendLoginResponse($user, $request);
         }
 
-        Activity::event('auth:checkpoint')->withRequestMetadata()->subject($user)->log();
+        Activity::event('auth:checkpoint')
+            ->withRequestMetadata()
+            ->subject($user)
+            ->log();
 
         $request->session()->put('auth_confirmation_token', [
-            'user_id' => $user->id,
+            'user_id'     => $user->id,
             'token_value' => $token = Str::random(64),
-            'expires_at' => CarbonImmutable::now()->addMinutes(5),
+            'expires_at'  => CarbonImmutable::now()->addMinutes(5),
         ]);
 
         return new JsonResponse([
             'data' => [
-                'complete' => false,
-                'confirmation_token' => $token,
+                'complete'            => false,
+                'confirmation_token'  => $token,
             ],
         ]);
     }
