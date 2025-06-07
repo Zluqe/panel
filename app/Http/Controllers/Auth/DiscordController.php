@@ -39,16 +39,15 @@ class DiscordController extends Controller
     {
         $userIp = $request->getClientIp();
 
-        //
-        // ─── ENHANCED VPN/PROXY DETECTION ───────────────────────────────────
-        //
+        // ─── ADVANCED VPN/PROXY DETECTION ───────────────────────────────────────
         $proxyKey = env('PROXYCHECK_KEY');
         if (!empty($proxyKey)) {
-            $url = "https://proxycheck.io/v2/{$userIp}?key={$proxyKey}&vpn=1&asn=1&risk=1";
+            // Enhanced API parameters for comprehensive detection
+            $url = "https://proxycheck.io/v2/{$userIp}?key={$proxyKey}&vpn=1&asn=1&risk=2&inf_engine=1&days=7";
             $response = Http::get($url);
             $data = $response->json();
 
-            // Validate API response status :cite[5]:cite[9]
+            // Validate API response status
             if (($data['status'] ?? '') !== 'ok') {
                 throw new DisplayException('Failed to verify IP status. Please try again later.');
             }
@@ -56,23 +55,24 @@ class DiscordController extends Controller
             $info = $data[$userIp] ?? [];
             $isProxy = ($info['proxy'] ?? 'no') === 'yes';
             $type = strtolower($info['type'] ?? '');
-            $isVpn = in_array($type, ['vpn', 'openvpn', 'tor', 'hosting'], true);
+            $isVpn = in_array($type, ['vpn', 'openvpn', 'tor', 'hosting', 'mysterium'], true);
             $isHosting = ($info['is_hosting'] ?? false) === true;
-            $highRisk = ($info['risk'] ?? 0) > 85; // Risk threshold 85/100 :cite[5]
+            $riskLevel = $info['risk'] ?? 0;
+            $highRisk = $riskLevel > 85; // Threshold based on proxycheck.io risk scoring :cite[2]
             
+            // Block all VPN types including potential risks
             if ($isProxy || $isVpn || $isHosting || $highRisk) {
                 $reason = match(true) {
                     $isProxy => 'Proxy',
                     $isVpn => 'VPN',
                     $isHosting => 'Hosting Service',
-                    $highRisk => 'High-Risk IP',
+                    $highRisk => "High-Risk IP (Score: {$riskLevel}/100)",
                     default => 'Suspicious Activity'
                 };
                 throw new DisplayException("{$reason} detected. Please disable it to proceed.");
             }
         }
-        //
-        // ─── END DETECTION ─────────────────────────────────────────────────
+        // ─── END DETECTION ──────────────────────────────────────────────────────
 
         return $this->proceedWithDiscordLogin($request);
     }
@@ -91,7 +91,7 @@ class DiscordController extends Controller
         ]);
 
         if (! $tokenResp->ok()) {
-            throw new DisplayException('Failed to authenticate with Discord');
+            throw new DisplayException('Failed to authenticate with Discord: ' . $tokenResp->body());
         }
         $req = json_decode($tokenResp->body());
 
@@ -157,7 +157,7 @@ class DiscordController extends Controller
         try {
             $this->creationService->handle($data);
         } catch (\Exception $e) {
-            throw new DisplayException('Failed to create user account');
+            throw new DisplayException('Failed to create user account: ' . $e->getMessage());
         }
 
         $user = User::where('username', $discord->id)->first();
