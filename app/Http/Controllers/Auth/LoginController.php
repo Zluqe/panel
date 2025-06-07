@@ -42,7 +42,7 @@ class LoginController extends AbstractLoginController
                 FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES
             ));
             if (in_array($userIp, $whitelisted, true)) {
-                return $this->attemptLogin($request, $userIp);
+                return $this->attemptLogin($request);
             }
         }
         //
@@ -70,10 +70,11 @@ class LoginController extends AbstractLoginController
         //
         // ─── END PROXYCHECK.IO LOOKUP ────────────────────────────────────────
 
-        return $this->attemptLogin($request, $userIp);
+        return $this->attemptLogin($request); // Removed $userIp argument
     }
 
-    protected function attemptLogin(Request $request, string $userIp): JsonResponse
+    // Updated method signature to match parent (only Request $request)
+    protected function attemptLogin(Request $request): JsonResponse
     {
         if ($this->hasTooManyLoginAttempts($request)) {
             $this->fireLockoutEvent($request);
